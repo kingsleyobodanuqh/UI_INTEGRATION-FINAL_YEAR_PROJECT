@@ -18,6 +18,8 @@ export function useReportData() {
       setLoading(true);
       setError(null);
 
+      console.log('Fetching reports from Supabase...');
+
       // Fetch full reports (latest 100)
       const { data: fullData, error: fullError } = await supabase
         .from('full_report_logs')
@@ -25,7 +27,10 @@ export function useReportData() {
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (fullError) throw fullError;
+      if (fullError) {
+        console.error('Error fetching full reports:', fullError);
+        throw fullError;
+      }
 
       // Fetch critical reports (latest 100)
       const { data: criticalData, error: criticalError } = await supabase
@@ -34,7 +39,12 @@ export function useReportData() {
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (criticalError) throw criticalError;
+      if (criticalError) {
+        console.error('Error fetching critical reports:', criticalError);
+        throw criticalError;
+      }
+
+      console.log(`Fetched ${fullData?.length || 0} full reports and ${criticalData?.length || 0} critical reports`);
 
       setFullReports(fullData || []);
       setCriticalReports(criticalData || []);
@@ -55,7 +65,8 @@ export function useReportData() {
       });
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error in fetchReports:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred while fetching data');
     } finally {
       setLoading(false);
     }
@@ -70,18 +81,44 @@ export function useReportData() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:5000/run-report', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      console.log('Running report via backend...');
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // Try different backend URLs
+      const backendUrls = [
+        'http://localhost:5000/run-report',
+        'http://127.0.0.1:5000/run-report'
+      ];
+
+      let response;
+      let lastError;
+
+      for (const url of backendUrls) {
+        try {
+          console.log(`Trying backend URL: ${url}`);
+          response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (response.ok) {
+            console.log(`Successfully connected to backend at: ${url}`);
+            break;
+          }
+        } catch (err) {
+          console.warn(`Failed to connect to ${url}:`, err);
+          lastError = err;
+          continue;
+        }
+      }
+
+      if (!response || !response.ok) {
+        throw new Error(`Backend connection failed. Make sure the Python backend is running on port 5000. Last error: ${lastError}`);
       }
 
       const result = await response.json();
+      console.log('Backend response:', result);
       
       if (!result.success) {
         throw new Error(result.message || 'Report generation failed');
@@ -92,7 +129,9 @@ export function useReportData() {
       
       return result;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to run report');
+      console.error('Error in runReport:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to run report';
+      setError(errorMessage);
       throw err;
     } finally {
       setLoading(false);

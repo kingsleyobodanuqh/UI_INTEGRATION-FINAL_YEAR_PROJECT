@@ -59,6 +59,18 @@ function App() {
               <p className="text-red-800 font-medium">Error</p>
             </div>
             <p className="text-red-700 mt-1">{error}</p>
+            {error.includes('Backend connection failed') && (
+              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                <p className="text-yellow-800 text-sm">
+                  <strong>Troubleshooting:</strong>
+                </p>
+                <ul className="text-yellow-700 text-sm mt-1 list-disc list-inside">
+                  <li>Make sure the Python backend is running: <code>cd backend && python report.py</code></li>
+                  <li>Check that port 5000 is not blocked by firewall</li>
+                  <li>Verify your .env file has correct Supabase credentials</li>
+                </ul>
+              </div>
+            )}
           </div>
         )}
 
