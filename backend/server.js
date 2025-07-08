@@ -15,8 +15,8 @@ app.use(cors());
 app.use(express.json());
 
 // Supabase client
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('Missing Supabase configuration. Please check your .env file.');
@@ -282,7 +282,7 @@ app.listen(PORT, () => {
   console.log(`Configured ${prtgServers.length} PRTG servers`);
   
   // Check required environment variables
-  const requiredVars = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'PRTG_USER', 'PRTG_PASS'];
+  const requiredVars = ['SUPABASE_URL', 'SUPABASE_KEY', 'PRTG_USER', 'PRTG_PASS'];
   const missingVars = requiredVars.filter(varName => !process.env[varName]);
   
   if (missingVars.length > 0) {
